@@ -1,0 +1,5 @@
+{
+  "name": "Cloudflare Workers for Platforms Interactive Report",
+  "description": "An interactive report built with React to showcase the features, capabilities, and benefits of using Cloudflare Workers for Platforms, including an exploration of Workers AI.",
+  "requestFramePermissions": []
+}
