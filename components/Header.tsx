@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 
 interface NavLink {
@@ -14,9 +13,13 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ navLinks, sectionIds }) => {
     const [activeSection, setActiveSection] = useState<string>('');
     const observer = useRef<IntersectionObserver | null>(null);
+    const isClickScrolling = useRef(false);
+    const scrollTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         observer.current = new IntersectionObserver((entries) => {
+            if (isClickScrolling.current) return;
+            
             const visibleSection = entries.find((entry) => entry.isIntersecting)?.target;
             if (visibleSection) {
                 setActiveSection(visibleSection.id);
@@ -32,8 +35,35 @@ export const Header: React.FC<HeaderProps> = ({ navLinks, sectionIds }) => {
             sections.forEach(section => {
                 if (section) observer.current?.unobserve(section);
             });
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
         };
     }, [sectionIds]);
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        e.preventDefault();
+        isClickScrolling.current = true;
+        const targetId = href.substring(1);
+        
+        setActiveSection(targetId);
+
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            window.history.pushState(null, '', href);
+        }
+
+        if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current);
+        }
+        scrollTimeoutRef.current = window.setTimeout(() => {
+            isClickScrolling.current = false;
+        }, 1000);
+    };
 
     return (
         <header id="header" className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg shadow-sm">
@@ -48,7 +78,9 @@ export const Header: React.FC<HeaderProps> = ({ navLinks, sectionIds }) => {
                                 <a
                                     key={link.href}
                                     href={link.href}
+                                    onClick={(e) => handleNavClick(e, link.href)}
                                     className={`nav-link text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium ${activeSection === link.href.substring(1) ? 'active' : ''}`}
+                                    aria-current={activeSection === link.href.substring(1) ? 'page' : undefined}
                                 >
                                     {link.label}
                                 </a>
